@@ -19,7 +19,7 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
     public BorrowRequest createRequest(BorrowRequest request) {
         Equipment equipment = equipmentRepository.findById(request.getEquipment().getId())
                 .orElseThrow(() -> new RuntimeException("Equipment not found!"));
-        User user = request.getUser(); // optionally load from DB if needed
+        User user = request.getUser();
 
         if (equipment.getAvailableQuantity() <= 0) {
             throw new RuntimeException("Equipment not available!");

@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { getAvailableEquipment, createBorrowRequest } from "../services/api";
+import {
+  FaClipboardList,
+  FaTools,
+  FaCheckCircle,
+  FaTimesCircle,
+} from "react-icons/fa";
 
 const Dashboard = () => {
   const [equipmentList, setEquipmentList] = useState([]);
@@ -16,15 +22,18 @@ const Dashboard = () => {
 
   const handleBorrow = async (equipmentId) => {
     try {
-      // Assuming userId = 1 for demo, replace with logged-in user ID
       const response = await createBorrowRequest({
-        user: { id: 1 },
+        user: { id: user.id }, // use logged-in user
         equipment: { id: equipmentId },
       });
-      setMessage(`Request created for ${response.data.equipment.name}`);
-      fetchEquipment(); // refresh equipment list
+      setMessage(
+        `✅ Your request for "${response.data.equipment.name}" has been submitted.`
+      );
+      fetchEquipment();
+      setTimeout(() => setMessage(""), 3000); // clear after 3s
     } catch (err) {
-      setMessage(err.response?.data?.error || "Failed to borrow");
+      setMessage(err.response?.data?.error || "❌ Failed to borrow");
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
@@ -33,39 +42,60 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="container mt-5">
-      <h2>Equipment Dashboard</h2>
-      {message && <div className="alert alert-info">{message}</div>}
-      <table className="table table-bordered mt-3">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Condition</th>
-            <th>Available Quantity</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {equipmentList.map((eq) => (
-            <tr key={eq.id}>
-              <td>{eq.name}</td>
-              <td>{eq.category}</td>
-              <td>{eq.conditionStatus}</td>
-              <td>{eq.availableQuantity}</td>
-              <td>
+    <div className="container mt-4">
+      <p className="text-center text-muted mb-5">
+        Browse the available equipment and request what you need.
+      </p>
+
+      {message && <div className="alert alert-info text-center">{message}</div>}
+
+      <div className="row">
+        {equipmentList.length === 0 && (
+          <div className="col-12 text-center">
+            <p className="text-muted">No equipment available at the moment.</p>
+          </div>
+        )}
+
+        {equipmentList.map((eq) => (
+          <div key={eq.id} className="col-md-4 mb-4">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body d-flex flex-column justify-content-between">
+                <div>
+                  <h5 className="card-title text-primary">{eq.name}</h5>
+                  <p className="card-text mb-2">
+                    <FaTools className="me-1" /> <strong>Category:</strong>{" "}
+                    {eq.category}
+                    <br />
+                    <FaClipboardList className="me-1" />{" "}
+                    <strong>Condition:</strong> {eq.conditionStatus}
+                    <br />
+                    {eq.availableQuantity > 0 ? (
+                      <span className="text-success">
+                        <FaCheckCircle className="me-1" /> Available:{" "}
+                        {eq.availableQuantity}
+                      </span>
+                    ) : (
+                      <span className="text-danger">
+                        <FaTimesCircle className="me-1" /> Not Available
+                      </span>
+                    )}
+                  </p>
+                </div>
+
                 <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => handleBorrow(eq.id)}
+                  className="btn btn-primary mt-2"
                   disabled={eq.availableQuantity === 0}
+                  onClick={() => handleBorrow(eq.id)}
                 >
-                  Borrow
+                  {eq.availableQuantity === 0
+                    ? "Unavailable"
+                    : "Request Borrow"}
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -1,9 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { getAllEquipment, addEquipment, updateEquipment, deleteEquipment } from "../services/api";
+import {
+  getAllEquipment,
+  addEquipment,
+  updateEquipment,
+  deleteEquipment,
+} from "../services/api";
 
 const AdminDashboard = () => {
   const [equipmentList, setEquipmentList] = useState([]);
-  const [form, setForm] = useState({ name: "", category: "", quantity: 1, availableQuantity: 1, conditionStatus: "Good" });
+  const [form, setForm] = useState({
+    name: "",
+    category: "",
+    quantity: 1,
+    availableQuantity: 1,
+    conditionStatus: "Good",
+  });
   const [message, setMessage] = useState("");
 
   const fetchEquipment = async () => {
@@ -22,9 +33,19 @@ const AdminDashboard = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      const response = await addEquipment({ ...form, quantity: parseInt(form.quantity), availableQuantity: parseInt(form.availableQuantity) });
+      const response = await addEquipment({
+        ...form,
+        quantity: parseInt(form.quantity),
+        availableQuantity: parseInt(form.availableQuantity),
+      });
       setMessage(`Added ${response.data.name}`);
-      setForm({ name: "", category: "", quantity: 1, availableQuantity: 1, conditionStatus: "Good" });
+      setForm({
+        name: "",
+        category: "",
+        quantity: 1,
+        availableQuantity: 1,
+        conditionStatus: "Good",
+      });
       fetchEquipment();
     } catch (err) {
       setMessage(err.response?.data?.error || "Failed to add");
@@ -34,18 +55,25 @@ const AdminDashboard = () => {
   const handleDelete = async (id) => {
     try {
       await deleteEquipment(id);
-      setMessage("Deleted successfully");
-      fetchEquipment();
+      setMessage("Equipment deleted successfully!");
     } catch (err) {
-      setMessage("Failed to delete");
+      setMessage(
+        err.response?.data?.message ||
+          "Cannot delete equipment with existing requests!"
+      );
     }
   };
 
   const handleEdit = async (equipment) => {
     const newName = prompt("Enter new name", equipment.name) || equipment.name;
-    const newCategory = prompt("Enter new category", equipment.category) || equipment.category;
+    const newCategory =
+      prompt("Enter new category", equipment.category) || equipment.category;
     try {
-      await updateEquipment(equipment.id, { ...equipment, name: newName, category: newCategory });
+      await updateEquipment(equipment.id, {
+        ...equipment,
+        name: newName,
+        category: newCategory,
+      });
       setMessage("Updated successfully");
       fetchEquipment();
     } catch (err) {
@@ -65,26 +93,61 @@ const AdminDashboard = () => {
       <form onSubmit={handleAdd} className="mb-4">
         <div className="row">
           <div className="col">
-            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="form-control" required />
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Name"
+              className="form-control"
+              required
+            />
           </div>
           <div className="col">
-            <input name="category" value={form.category} onChange={handleChange} placeholder="Category" className="form-control" required />
+            <input
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              placeholder="Category"
+              className="form-control"
+              required
+            />
           </div>
           <div className="col">
-            <input name="quantity" type="number" value={form.quantity} onChange={handleChange} className="form-control" min="1" />
+            <input
+              name="quantity"
+              type="number"
+              value={form.quantity}
+              onChange={handleChange}
+              className="form-control"
+              min="1"
+            />
           </div>
           <div className="col">
-            <input name="availableQuantity" type="number" value={form.availableQuantity} onChange={handleChange} className="form-control" min="0" />
+            <input
+              name="availableQuantity"
+              type="number"
+              value={form.availableQuantity}
+              onChange={handleChange}
+              className="form-control"
+              min="0"
+            />
           </div>
           <div className="col">
-            <select name="conditionStatus" value={form.conditionStatus} onChange={handleChange} className="form-control">
+            <select
+              name="conditionStatus"
+              value={form.conditionStatus}
+              onChange={handleChange}
+              className="form-control"
+            >
               <option>Good</option>
               <option>Damaged</option>
               <option>Needs Repair</option>
             </select>
           </div>
           <div className="col">
-            <button type="submit" className="btn btn-success">Add Equipment</button>
+            <button type="submit" className="btn btn-success">
+              Add Equipment
+            </button>
           </div>
         </div>
       </form>
@@ -109,8 +172,18 @@ const AdminDashboard = () => {
               <td>{eq.quantity}</td>
               <td>{eq.availableQuantity}</td>
               <td>
-                <button className="btn btn-primary btn-sm me-2" onClick={() => handleEdit(eq)}>Edit</button>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(eq.id)}>Delete</button>
+                <button
+                  className="btn btn-primary btn-sm me-2"
+                  onClick={() => handleEdit(eq)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(eq.id)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
