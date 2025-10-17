@@ -5,155 +5,146 @@ import {
   updateEquipment,
   deleteEquipment,
 } from "../services/api";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const AdminDashboard = () => {
   const [equipmentList, setEquipmentList] = useState([]);
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-    quantity: 1,
-    availableQuantity: 1,
-    conditionStatus: "Good",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
+
+  const [modal, setModal] = useState({
+    show: false,
+    isEdit: false,
+    equipment: {
+      name: "",
+      category: "",
+      quantity: 1,
+      availableQuantity: 1,
+      conditionStatus: "Good",
+    },
+  });
+
+  useEffect(() => {
+    fetchEquipment();
+  }, []);
 
   const fetchEquipment = async () => {
     try {
       const response = await getAllEquipment();
       setEquipmentList(response.data);
     } catch (err) {
-      console.error(err);
+      showMessage("❌ Failed to load equipment");
     }
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const showMessage = (msg) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(""), 3000);
   };
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await addEquipment({
-        ...form,
-        quantity: parseInt(form.quantity),
-        availableQuantity: parseInt(form.availableQuantity),
-      });
-      setMessage(`Added ${response.data.name}`);
-      setForm({
+  const openModal = (isEdit = false, equipment = null) => {
+    setModal({
+      show: true,
+      isEdit,
+      equipment: equipment
+        ? { ...equipment }
+        : {
+            name: "",
+            category: "",
+            quantity: 1,
+            availableQuantity: 1,
+            conditionStatus: "Good",
+          },
+    });
+  };
+
+  const closeModal = () => {
+    setModal({
+      show: false,
+      isEdit: false,
+      equipment: {
         name: "",
         category: "",
         quantity: 1,
         availableQuantity: 1,
         conditionStatus: "Good",
-      });
+      },
+    });
+  };
+
+  const handleModalChange = (e) => {
+    setModal({
+      ...modal,
+      equipment: { ...modal.equipment, [e.target.name]: e.target.value },
+    });
+  };
+
+  const handleSave = async () => {
+    try {
+      if (modal.isEdit) {
+        await updateEquipment(modal.equipment.id, {
+          ...modal.equipment,
+          quantity: parseInt(modal.equipment.quantity),
+          availableQuantity: parseInt(modal.equipment.availableQuantity),
+        });
+        showMessage("✏️ Updated successfully");
+      } else {
+        await addEquipment({
+          ...modal.equipment,
+          quantity: parseInt(modal.equipment.quantity),
+          availableQuantity: parseInt(modal.equipment.availableQuantity),
+        });
+        showMessage(`✅ Added ${modal.equipment.name}`);
+      }
+      closeModal();
       fetchEquipment();
     } catch (err) {
-      setMessage(err.response?.data?.error || "Failed to add");
+      showMessage(err.response?.data?.error || "❌ Operation failed");
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await deleteEquipment(id);
-      setMessage("Equipment deleted successfully!");
+      showMessage("🗑 Equipment deleted successfully");
+      fetchEquipment();
     } catch (err) {
-      setMessage(
+      showMessage(
         err.response?.data?.message ||
-          "Cannot delete equipment with existing requests!"
+          "❌ Cannot delete equipment with existing requests"
       );
     }
   };
 
-  const handleEdit = async (equipment) => {
-    const newName = prompt("Enter new name", equipment.name) || equipment.name;
-    const newCategory =
-      prompt("Enter new category", equipment.category) || equipment.category;
-    try {
-      await updateEquipment(equipment.id, {
-        ...equipment,
-        name: newName,
-        category: newCategory,
-      });
-      setMessage("Updated successfully");
-      fetchEquipment();
-    } catch (err) {
-      setMessage("Failed to update");
-    }
-  };
-
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
+  const filteredEquipment = equipmentList.filter(
+    (eq) =>
+      eq.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      eq.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="container mt-5">
-      <h2>Admin Equipment Management</h2>
-      {message && <div className="alert alert-info">{message}</div>}
+      <h2 className="text-center mb-4 text-primary">
+        Admin Equipment Dashboard
+      </h2>
 
-      <form onSubmit={handleAdd} className="mb-4">
-        <div className="row">
-          <div className="col">
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Name"
-              className="form-control"
-              required
-            />
-          </div>
-          <div className="col">
-            <input
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              placeholder="Category"
-              className="form-control"
-              required
-            />
-          </div>
-          <div className="col">
-            <input
-              name="quantity"
-              type="number"
-              value={form.quantity}
-              onChange={handleChange}
-              className="form-control"
-              min="1"
-            />
-          </div>
-          <div className="col">
-            <input
-              name="availableQuantity"
-              type="number"
-              value={form.availableQuantity}
-              onChange={handleChange}
-              className="form-control"
-              min="0"
-            />
-          </div>
-          <div className="col">
-            <select
-              name="conditionStatus"
-              value={form.conditionStatus}
-              onChange={handleChange}
-              className="form-control"
-            >
-              <option>Good</option>
-              <option>Damaged</option>
-              <option>Needs Repair</option>
-            </select>
-          </div>
-          <div className="col">
-            <button type="submit" className="btn btn-success">
-              Add Equipment
-            </button>
-          </div>
-        </div>
-      </form>
+      {message && <div className="alert alert-info text-center">{message}</div>}
 
-      <table className="table table-bordered">
-        <thead>
+      <div className="d-flex justify-content-between mb-3">
+        <input
+          type="text"
+          className="form-control w-50"
+          placeholder="Search by name or category..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button className="btn btn-success" onClick={() => openModal(false)}>
+          + Add Equipment
+        </button>
+      </div>
+
+      <table className="table table-hover shadow-sm">
+        <thead className="table-dark">
           <tr>
             <th>Name</th>
             <th>Category</th>
@@ -164,31 +155,99 @@ const AdminDashboard = () => {
           </tr>
         </thead>
         <tbody>
-          {equipmentList.map((eq) => (
-            <tr key={eq.id}>
-              <td>{eq.name}</td>
-              <td>{eq.category}</td>
-              <td>{eq.conditionStatus}</td>
-              <td>{eq.quantity}</td>
-              <td>{eq.availableQuantity}</td>
-              <td>
-                <button
-                  className="btn btn-primary btn-sm me-2"
-                  onClick={() => handleEdit(eq)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(eq.id)}
-                >
-                  Delete
-                </button>
+          {filteredEquipment.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="text-center text-muted py-3">
+                No equipment found.
               </td>
             </tr>
-          ))}
+          ) : (
+            filteredEquipment.map((eq) => (
+              <tr key={eq.id}>
+                <td>{eq.name}</td>
+                <td>{eq.category}</td>
+                <td>{eq.conditionStatus}</td>
+                <td>{eq.quantity}</td>
+                <td>{eq.availableQuantity}</td>
+                <td>
+                  <button
+                    className="btn btn-primary btn-sm me-2"
+                    onClick={() => openModal(true, eq)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDelete(eq.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
+
+      {/* Add/Edit Modal */}
+      {modal.show && (
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {modal.isEdit ? "Edit Equipment" : "Add Equipment"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {["name", "category", "quantity", "availableQuantity"].map(
+                  (field) => (
+                    <div className="mb-2" key={field}>
+                      <label className="form-label">
+                        {field.charAt(0).toUpperCase() + field.slice(1)}
+                      </label>
+                      <input
+                        className="form-control"
+                        type={field.includes("Quantity") ? "number" : "text"}
+                        name={field}
+                        value={modal.equipment[field]}
+                        onChange={handleModalChange}
+                        min="0"
+                      />
+                    </div>
+                  )
+                )}
+                <div className="mb-2">
+                  <label className="form-label">Condition</label>
+                  <select
+                    className="form-select"
+                    name="conditionStatus"
+                    value={modal.equipment.conditionStatus}
+                    onChange={handleModalChange}
+                  >
+                    <option>Good</option>
+                    <option>Damaged</option>
+                    <option>Needs Repair</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button className="btn btn-primary" onClick={handleSave}>
+                  {modal.isEdit ? "Save Changes" : "Add Equipment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

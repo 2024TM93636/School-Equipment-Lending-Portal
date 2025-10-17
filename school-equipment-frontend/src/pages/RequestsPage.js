@@ -6,14 +6,17 @@ import {
   rejectRequest,
   markReturned,
 } from "../services/api";
+import { FaCheck, FaTimes, FaUndo, FaSearch } from "react-icons/fa";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
   const [requests, setRequests] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // fetch all requests
+  // fetch requests
   const fetchRequests = async () => {
     setLoading(true);
     try {
@@ -26,40 +29,9 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
       setRequests(response.data);
     } catch (err) {
       console.error(err);
-      setMessage("Failed to load requests.");
+      showMessage("❌ Failed to load requests.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  // approve / reject / return handlers
-  const handleApprove = async (id) => {
-    try {
-      await approveRequest(id, { remarks: "Approved by admin" });
-      showMessage("Request approved successfully ✅");
-      fetchRequests();
-    } catch (err) {
-      showMessage(err.response?.data?.error || "Failed to approve ❌");
-    }
-  };
-
-  const handleReject = async (id) => {
-    try {
-      await rejectRequest(id, { remarks: "Rejected by admin" });
-      showMessage("Request rejected ❌");
-      fetchRequests();
-    } catch (err) {
-      showMessage(err.response?.data?.error || "Failed to reject");
-    }
-  };
-
-  const handleReturn = async (id) => {
-    try {
-      await markReturned(id);
-      showMessage("Equipment marked as returned 🔄");
-      fetchRequests();
-    } catch (err) {
-      showMessage(err.response?.data?.error || "Failed to mark returned");
     }
   };
 
@@ -68,11 +40,49 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
     setTimeout(() => setMessage(""), 3000);
   };
 
+  // approve / reject / return handlers
+  const handleApprove = async (id) => {
+    try {
+      await approveRequest(id, { remarks: "Approved by admin" });
+      showMessage("✅ Request approved successfully");
+      fetchRequests();
+    } catch (err) {
+      showMessage(err.response?.data?.error || "❌ Failed to approve");
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      await rejectRequest(id, { remarks: "Rejected by admin" });
+      showMessage("❌ Request rejected");
+      fetchRequests();
+    } catch (err) {
+      showMessage(err.response?.data?.error || "❌ Failed to reject");
+    }
+  };
+
+  const handleReturn = async (id) => {
+    try {
+      await markReturned(id);
+      showMessage("🔄 Equipment marked as returned");
+      fetchRequests();
+    } catch (err) {
+      showMessage(err.response?.data?.error || "❌ Failed to mark returned");
+    }
+  };
+
   useEffect(() => {
     fetchRequests();
   }, []);
 
-  // helper: badge color for each status
+  // Filtered requests based on search and status
+  const filteredRequests = requests.filter(
+    (req) =>
+      (req.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.equipment.name.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "ALL" || req.status === statusFilter)
+  );
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "PENDING":
@@ -89,92 +99,120 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
   };
 
   return (
-    <>
-      {/* ✅ Page Container */}
-      <div className="container mt-4">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3 className="fw-bold">Borrow Requests</h3>
-          {loading && (
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          )}
+    <div className="container mt-4">
+      <h2 className="text-center mb-4 text-primary">
+        Borrow Requests Dashboard
+      </h2>
+
+      {message && <div className="alert alert-info text-center">{message}</div>}
+
+      {/* Search & Status Filter */}
+      <div className="row mb-3 g-2">
+        <div className="col-md-6">
+          <div className="input-group">
+            <span className="input-group-text bg-primary text-white">
+              <FaSearch />
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search by user or equipment..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
-        {/* ✅ Toast / Message */}
-        {message && (
-          <div className="alert alert-info text-center fw-semibold">
-            {message}
-          </div>
-        )}
+        <div className="col-md-3">
+          <select
+            className="form-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="RETURNED">Returned</option>
+          </select>
+        </div>
+      </div>
 
-        {/* ✅ Table */}
-        <div className="table-responsive">
-          <table className="table table-striped table-hover align-middle shadow-sm">
+      {/* Loading Spinner */}
+      {loading ? (
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <div className="table-responsive shadow-sm rounded">
+          <table className="table table-hover table-bordered align-middle mb-0">
             <thead className="table-dark">
               <tr>
-                <th scope="col">User</th>
-                <th scope="col">Equipment</th>
-                <th scope="col">Status</th>
-                <th scope="col">Request Date</th>
-                <th scope="col" style={{ width: "220px" }}>
-                  Actions
-                </th>
+                <th>User</th>
+                <th>Equipment</th>
+                <th>Status</th>
+                <th>Requested On</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {requests.length > 0 ? (
-                requests.map((req) => (
+              {filteredRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center text-muted py-3">
+                    No requests found.
+                  </td>
+                </tr>
+              ) : (
+                filteredRequests.map((req) => (
                   <tr key={req.id}>
                     <td>{req.user.name}</td>
                     <td>{req.equipment.name}</td>
                     <td>{getStatusBadge(req.status)}</td>
                     <td>{new Date(req.requestDate).toLocaleString()}</td>
                     <td>
-                      {userRole === "ADMIN" && req.status === "PENDING" && (
-                        <>
+                      <div className="d-flex gap-2">
+                        {userRole === "ADMIN" && req.status === "PENDING" && (
+                          <>
+                            <button
+                              className="btn btn-success btn-sm"
+                              onClick={() => handleApprove(req.id)}
+                              title="Approve"
+                            >
+                              <FaCheck />
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleReject(req.id)}
+                              title="Reject"
+                            >
+                              <FaTimes />
+                            </button>
+                          </>
+                        )}
+                        {userRole !== "ADMIN" && req.status === "APPROVED" && (
                           <button
-                            className="btn btn-success btn-sm me-2"
-                            onClick={() => handleApprove(req.id)}
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleReturn(req.id)}
+                            title="Mark Returned"
                           >
-                            Approve
+                            <FaUndo />
                           </button>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleReject(req.id)}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-
-                      {userRole === "STUDENT" && req.status === "APPROVED" && (
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handleReturn(req.id)}
-                        >
-                          Mark Returned
-                        </button>
-                      )}
-
-                      {req.status === "RETURNED" && (
-                        <span className="text-muted">Completed</span>
-                      )}
+                        )}
+                        {req.status === "RETURNED" && (
+                          <span className="text-muted">Completed</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center text-muted py-3">
-                    No borrow requests found.
-                  </td>
-                </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 };
 

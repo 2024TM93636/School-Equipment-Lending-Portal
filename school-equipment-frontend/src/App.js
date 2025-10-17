@@ -71,7 +71,7 @@ const MainLayout = ({ user, userRole, setUser, userId }) => {
           path="/dashboard"
           element={
             <PrivateRoute user={user}>
-              <Dashboard />
+              <Dashboard user={user} />
             </PrivateRoute>
           }
         />
