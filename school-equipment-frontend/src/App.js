@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -11,54 +12,56 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RequestsPage from "./pages/RequestsPage";
 import Navbar from "./components/Navbar";
-import { getUserById } from "./services/api";
+import { getUserById, logoutUser } from "./services/api";
 import PrivateRoute from "./components/PrivateRoute";
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [userRole, setUserRole] = useState("");
 
+  // Load user from localStorage
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
+  return (
+    <Router>
+      <MainLayout user={user} setUser={setUser} />
+    </Router>
+  );
+};
+
+const MainLayout = ({ user, setUser }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const hideNavbar = ["/", "/register"].includes(location.pathname);
+
+  const [userRole, setUserRole] = useState(user?.role || "");
+
+  // Fetch updated user info from backend
   useEffect(() => {
     const fetchUser = async () => {
       if (!user || !user.id) return;
       try {
         const response = await getUserById(user.id);
-        setUserId(response.data.id);
         setUserRole(response.data.role);
       } catch (err) {
         console.error("Error fetching user:", err);
+        // If user not found, clear storage and redirect to login
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        setUser(null);
+        navigate("/");
       }
     };
     fetchUser();
-  }, [user]);
-
-  return (
-    <Router>
-      <MainLayout
-        user={user}
-        userRole={userRole}
-        setUser={setUser}
-        userId={userId}
-      />
-    </Router>
-  );
-};
-
-const MainLayout = ({ user, userRole, setUser, userId }) => {
-  const location = useLocation();
-  const hideNavbar = ["/", "/register"].includes(location.pathname);
+  }, [user, navigate]);
 
   return (
     <>
       {!hideNavbar && (
         <Navbar
-          userRole={userRole || "GUEST"}
+          userRole={userRole}
           userName={user?.name || "Guest"}
           setUser={setUser}
         />
@@ -66,12 +69,11 @@ const MainLayout = ({ user, userRole, setUser, userId }) => {
       <Routes>
         <Route path="/" element={<LoginPage setUser={setUser} />} />
         <Route path="/register" element={<RegisterPage />} />
-
         <Route
           path="/dashboard"
           element={
             <PrivateRoute user={user}>
-              <Dashboard user={user} />
+              <Dashboard user={user} userRole={userRole} />
             </PrivateRoute>
           }
         />
@@ -79,14 +81,14 @@ const MainLayout = ({ user, userRole, setUser, userId }) => {
           path="/requests"
           element={
             <PrivateRoute user={user}>
-              <RequestsPage userRole={userRole} userId={userId} />
+              <RequestsPage userRole={userRole} userId={user?.id} />
             </PrivateRoute>
           }
         />
         <Route
           path="/admin"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute user={user} requiredRole="ADMIN">
               <AdminDashboard />
             </PrivateRoute>
           }

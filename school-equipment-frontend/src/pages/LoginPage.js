@@ -16,9 +16,11 @@ const LoginPage = ({ setUser }) => {
 
     try {
       const response = await loginUser({ email, password });
-      setUser(response.data.user);
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      const { user, token } = response.data;
+
+      setUser(user);
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
       setLoading(false);
       navigate("/dashboard");
     } catch (err) {
@@ -33,28 +35,11 @@ const LoginPage = ({ setUser }) => {
         <div className="col-md-6">
           <div className="card p-4 shadow">
             <h2 className="card-title mb-4 text-center">Login</h2>
-
-            {error && (
-              <div
-                className="alert alert-danger alert-dismissible fade show"
-                role="alert"
-              >
-                {error}
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setError("")}
-                ></button>
-              </div>
-            )}
-
+            {error && <div className="alert alert-danger">{error}</div>}
             <form onSubmit={handleLogin}>
               <div className="mb-3">
-                <label htmlFor="email" className="form-label">
-                  Email:
-                </label>
+                <label className="form-label">Email:</label>
                 <input
-                  id="email"
                   type="email"
                   className="form-control"
                   value={email}
@@ -64,11 +49,8 @@ const LoginPage = ({ setUser }) => {
               </div>
 
               <div className="mb-3">
-                <label htmlFor="password" className="form-label">
-                  Password:
-                </label>
+                <label className="form-label">Password:</label>
                 <input
-                  id="password"
                   type="password"
                   className="form-control"
                   value={password}
@@ -83,9 +65,9 @@ const LoginPage = ({ setUser }) => {
                 className="btn btn-primary w-100"
                 disabled={loading}
               >
-                {loading ? (
+                {loading && (
                   <span className="spinner-border spinner-border-sm me-2"></span>
-                ) : null}
+                )}
                 Login
               </button>
             </form>

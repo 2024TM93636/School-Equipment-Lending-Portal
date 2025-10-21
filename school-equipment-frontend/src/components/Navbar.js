@@ -1,10 +1,16 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { logoutUser } from "../services/api";
 
 const Navbar = ({ userRole, userName, setUser }) => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.warn("Logout failed on server:", err);
+    }
     setUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -30,7 +36,7 @@ const Navbar = ({ userRole, userName, setUser }) => {
                 Requests
               </Link>
             </li>
-            {userRole === "ADMIN" && (
+            {userRole.toUpperCase() === "ADMIN" && (
               <li className="nav-item">
                 <Link className="nav-link" to="/admin">
                   Admin

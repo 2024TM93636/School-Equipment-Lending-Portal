@@ -197,7 +197,7 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
                             onClick={() => handleReturn(req.id)}
                             title="Mark Returned"
                           >
-                            <FaUndo />
+                            <FaUndo /> <span>Mark Returned</span>
                           </button>
                         )}
                         {req.status === "RETURNED" && (

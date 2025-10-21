@@ -19,7 +19,12 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await registerUser({ name, email, password, role });
+      await registerUser({
+        name,
+        email: email.trim().toLowerCase(),
+        password,
+        role: role.toUpperCase(),
+      });
       setLoading(false);
       setSuccess("Registration successful! Redirecting to login...");
       setTimeout(() => navigate("/"), 2000);
@@ -35,42 +40,12 @@ const RegisterPage = () => {
         <div className="col-md-6">
           <div className="card p-4 shadow">
             <h2 className="card-title mb-4 text-center">Register</h2>
-
-            {error && (
-              <div
-                className="alert alert-danger alert-dismissible fade show"
-                role="alert"
-              >
-                {error}
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setError("")}
-                ></button>
-              </div>
-            )}
-
-            {success && (
-              <div
-                className="alert alert-success alert-dismissible fade show"
-                role="alert"
-              >
-                {success}
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setSuccess("")}
-                ></button>
-              </div>
-            )}
-
+            {error && <div className="alert alert-danger">{error}</div>}
+            {success && <div className="alert alert-success">{success}</div>}
             <form onSubmit={handleRegister}>
               <div className="mb-3">
-                <label htmlFor="name" className="form-label">
-                  Name:
-                </label>
+                <label className="form-label">Name:</label>
                 <input
-                  id="name"
                   type="text"
                   className="form-control"
                   value={name}
@@ -80,11 +55,8 @@ const RegisterPage = () => {
               </div>
 
               <div className="mb-3">
-                <label htmlFor="email" className="form-label">
-                  Email:
-                </label>
+                <label className="form-label">Email:</label>
                 <input
-                  id="email"
                   type="email"
                   className="form-control"
                   value={email}
@@ -94,11 +66,8 @@ const RegisterPage = () => {
               </div>
 
               <div className="mb-3">
-                <label htmlFor="password" className="form-label">
-                  Password:
-                </label>
+                <label className="form-label">Password:</label>
                 <input
-                  id="password"
                   type="password"
                   className="form-control"
                   value={password}
@@ -109,11 +78,8 @@ const RegisterPage = () => {
               </div>
 
               <div className="mb-3">
-                <label htmlFor="role" className="form-label">
-                  Role:
-                </label>
+                <label className="form-label">Role:</label>
                 <select
-                  id="role"
                   className="form-select"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
@@ -129,9 +95,9 @@ const RegisterPage = () => {
                 className="btn btn-success w-100"
                 disabled={loading}
               >
-                {loading ? (
+                {loading && (
                   <span className="spinner-border spinner-border-sm me-2"></span>
-                ) : null}
+                )}
                 Register
               </button>
             </form>

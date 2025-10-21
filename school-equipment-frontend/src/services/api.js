@@ -6,10 +6,20 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
+// Axios interceptor to include token in all requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers["Authorization"] = token;
+  }
+  return config;
+});
+
 // User APIs
 export const registerUser = (user) => api.post("/users/register", user);
 export const loginUser = (credentials) => api.post("/users/login", credentials);
 export const getUserById = (userId) => api.get(`/users/${userId}`);
+export const logoutUser = () => api.post("/users/logout", null);
 
 // Equipment APIs
 export const getAllEquipment = () => api.get("/equipment");

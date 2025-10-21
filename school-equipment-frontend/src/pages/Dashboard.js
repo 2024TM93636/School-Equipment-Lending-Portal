@@ -7,7 +7,7 @@ import {
   FaTimesCircle,
 } from "react-icons/fa";
 
-const Dashboard = ({ user }) => {
+const Dashboard = ({ user, userRole }) => {
   const [equipmentList, setEquipmentList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
   const [message, setMessage] = useState("");
@@ -31,11 +31,11 @@ const Dashboard = ({ user }) => {
         user: { id: user.id },
         equipment: { id: equipmentId },
       });
-      setMessage(`✅ Request submitted for "${response.data.equipment.name}"`);
+      setMessage(`Request submitted for "${response.data.equipment.name}"`);
       fetchEquipment();
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      setMessage(err.response?.data?.error || "❌ Failed to borrow");
+      setMessage(err.response?.data?.error || "Failed to borrow");
       setTimeout(() => setMessage(""), 3000);
     }
   };
@@ -150,17 +150,21 @@ const Dashboard = ({ user }) => {
                   </p>
                 </div>
 
-                <button
-                  className={`btn mt-3 ${
-                    eq.availableQuantity === 0 ? "btn-secondary" : "btn-primary"
-                  }`}
-                  disabled={eq.availableQuantity === 0}
-                  onClick={() => handleBorrow(eq.id)}
-                >
-                  {eq.availableQuantity === 0
-                    ? "Unavailable"
-                    : "Request Borrow"}
-                </button>
+                {userRole !== "ADMIN" && (
+                  <button
+                    className={`btn mt-3 ${
+                      eq.availableQuantity === 0
+                        ? "btn-secondary"
+                        : "btn-primary"
+                    }`}
+                    disabled={eq.availableQuantity === 0}
+                    onClick={() => handleBorrow(eq.id)}
+                  >
+                    {eq.availableQuantity === 0
+                      ? "Unavailable"
+                      : "Request Borrow"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
