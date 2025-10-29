@@ -18,9 +18,9 @@ import PrivateRoute from "./components/PrivateRoute";
 const App = () => {
   const [user, setUser] = useState(null);
 
-  // Load user from localStorage
+  // Load user from sessionStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
+    const savedUser = sessionStorage.getItem("user");
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
@@ -48,8 +48,8 @@ const MainLayout = ({ user, setUser }) => {
       } catch (err) {
         console.error("Error fetching user:", err);
         // If user not found, clear storage and redirect to login
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("token");
         setUser(null);
         navigate("/");
       }

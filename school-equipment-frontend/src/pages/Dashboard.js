@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAvailableEquipment, createBorrowRequest } from "../services/api";
-import {
-  FaClipboardList,
-  FaTools,
-  FaCheckCircle,
-  FaTimesCircle,
-} from "react-icons/fa";
+import { FaClipboardList, FaTools } from "react-icons/fa";
+import "./Dashboard.css";
 
 const Dashboard = ({ user, userRole }) => {
   const [equipmentList, setEquipmentList] = useState([]);
@@ -170,14 +166,6 @@ const Dashboard = ({ user, userRole }) => {
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        .hover-shadow:hover {
-          transform: translateY(-5px);
-          transition: all 0.3s ease;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-      `}</style>
     </div>
   );
 };

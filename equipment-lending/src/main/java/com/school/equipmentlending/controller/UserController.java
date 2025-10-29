@@ -20,7 +20,8 @@ public class UserController {
 
     private final UserService userService;
 
-    private static final Map<String, Long> tokenStore = new ConcurrentHashMap<>();
+    // Simulated in-memory token store (for demonstration only)
+    public static final Map<String, Long> tokenStore = new ConcurrentHashMap<>();
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -45,7 +46,6 @@ public class UserController {
         }
 
         Optional<User> optionalUser = userService.authenticate(email, password);
-
         if (optionalUser.isEmpty()) {
             log.warn("Login failed for email: {}", email);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

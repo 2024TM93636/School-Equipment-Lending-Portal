@@ -29,7 +29,7 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
       setRequests(response.data);
     } catch (err) {
       console.error(err);
-      showMessage("❌ Failed to load requests.");
+      showMessage("Failed to load requests.");
     } finally {
       setLoading(false);
     }
@@ -44,30 +44,30 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
   const handleApprove = async (id) => {
     try {
       await approveRequest(id, { remarks: "Approved by admin" });
-      showMessage("✅ Request approved successfully");
+      showMessage("Request approved successfully");
       fetchRequests();
     } catch (err) {
-      showMessage(err.response?.data?.error || "❌ Failed to approve");
+      showMessage(err.response?.data?.error || "Failed to approve");
     }
   };
 
   const handleReject = async (id) => {
     try {
       await rejectRequest(id, { remarks: "Rejected by admin" });
-      showMessage("❌ Request rejected");
+      showMessage("Request rejected");
       fetchRequests();
     } catch (err) {
-      showMessage(err.response?.data?.error || "❌ Failed to reject");
+      showMessage(err.response?.data?.error || "Failed to reject");
     }
   };
 
   const handleReturn = async (id) => {
     try {
       await markReturned(id);
-      showMessage("🔄 Equipment marked as returned");
+      showMessage("Equipment marked as returned");
       fetchRequests();
     } catch (err) {
-      showMessage(err.response?.data?.error || "❌ Failed to mark returned");
+      showMessage(err.response?.data?.error || "Failed to mark returned");
     }
   };
 

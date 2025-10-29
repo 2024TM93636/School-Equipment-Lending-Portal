@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [equipmentList, setEquipmentList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
 
   const [modal, setModal] = useState({
     show: false,
@@ -33,7 +34,7 @@ const AdminDashboard = () => {
       const response = await getAllEquipment();
       setEquipmentList(response.data);
     } catch (err) {
-      showMessage("❌ Failed to load equipment");
+      showMessage("Failed to load equipment");
     }
   };
 
@@ -87,32 +88,34 @@ const AdminDashboard = () => {
           quantity: parseInt(modal.equipment.quantity),
           availableQuantity: parseInt(modal.equipment.availableQuantity),
         });
-        showMessage("✏️ Updated successfully");
+        showMessage("Equipment updated successfully");
       } else {
         await addEquipment({
           ...modal.equipment,
           quantity: parseInt(modal.equipment.quantity),
           availableQuantity: parseInt(modal.equipment.availableQuantity),
         });
-        showMessage(`✅ Added ${modal.equipment.name}`);
+        showMessage(`Added ${modal.equipment.name}`);
       }
       closeModal();
       fetchEquipment();
     } catch (err) {
-      showMessage(err.response?.data?.error || "❌ Operation failed");
+      showMessage(err.response?.data?.error || "Operation failed");
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await deleteEquipment(id);
-      showMessage("🗑 Equipment deleted successfully");
+      showMessage("Equipment deleted successfully");
       fetchEquipment();
     } catch (err) {
       showMessage(
         err.response?.data?.message ||
-          "❌ Cannot delete equipment with existing requests"
+          "Cannot delete equipment with existing requests"
       );
+    } finally {
+      setConfirmDelete({ show: false, id: null });
     }
   };
 
@@ -178,7 +181,7 @@ const AdminDashboard = () => {
                   </button>
                   <button
                     className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(eq.id)}
+                    onClick={() => setConfirmDelete({ show: true, id: eq.id })}
                   >
                     Delete
                   </button>
@@ -242,6 +245,44 @@ const AdminDashboard = () => {
                 </button>
                 <button className="btn btn-primary" onClick={handleSave}>
                   {modal.isEdit ? "Save Changes" : "Add Equipment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete.show && (
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setConfirmDelete({ show: false, id: null })}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  Are you sure you want to delete this equipment? This action
+                  cannot be undone.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setConfirmDelete({ show: false, id: null })}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleDelete(confirmDelete.id)}
+                >
+                  Delete
                 </button>
               </div>
             </div>

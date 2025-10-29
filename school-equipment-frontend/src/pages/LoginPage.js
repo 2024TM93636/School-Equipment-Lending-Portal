@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/api";
 
 const LoginPage = ({ setUser }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -15,12 +14,12 @@ const LoginPage = ({ setUser }) => {
     setLoading(true);
 
     try {
-      const response = await loginUser({ email, password });
+      const response = await loginUser(credentials);
       const { user, token } = response.data;
 
       setUser(user);
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(user));
       setLoading(false);
       navigate("/dashboard");
     } catch (err) {
@@ -42,8 +41,10 @@ const LoginPage = ({ setUser }) => {
                 <input
                   type="email"
                   className="form-control"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={credentials.email}
+                  onChange={(e) =>
+                    setCredentials({ ...credentials, email: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -53,8 +54,10 @@ const LoginPage = ({ setUser }) => {
                 <input
                   type="password"
                   className="form-control"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={credentials.password}
+                  onChange={(e) =>
+                    setCredentials({ ...credentials, password: e.target.value })
+                  }
                   required
                   minLength={6}
                 />
