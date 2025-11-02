@@ -1,15 +1,20 @@
 package com.school.equipmentlending.service.impl;
 
+import com.school.equipmentlending.exception.ResourceAlreadyExistsException;
 import com.school.equipmentlending.model.*;
 import com.school.equipmentlending.repository.BorrowRequestRepository;
 import com.school.equipmentlending.repository.EquipmentRepository;
 import com.school.equipmentlending.service.BorrowRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BorrowRequestServiceImpl implements BorrowRequestService {
 
     private final BorrowRequestRepository borrowRequestRepository;
@@ -19,20 +24,35 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
     public BorrowRequest createRequest(BorrowRequest request) {
         Equipment equipment = equipmentRepository.findById(request.getEquipment().getId())
                 .orElseThrow(() -> new RuntimeException("Equipment not found!"));
+
         User user = request.getUser();
 
         if (equipment.getAvailableQuantity() <= 0) {
             throw new RuntimeException("Equipment not available!");
         }
 
+        //  Check for overlapping requests (same equipment + overlapping dates)
+        List<BorrowRequest> overlapping = borrowRequestRepository.findOverlappingRequests(
+                equipment.getId(),
+                request.getBorrowStartDate(),
+                request.getBorrowEndDate()
+        );
+
+        if (!overlapping.isEmpty()) {
+            throw new ResourceAlreadyExistsException(
+                    "This equipment is already booked during the selected period!"
+            );
+        }
+
         // Reduce available count
         equipment.setAvailableQuantity(equipment.getAvailableQuantity() - 1);
         equipmentRepository.save(equipment);
 
+        // Save new request
         request.setEquipment(equipment);
         request.setUser(user);
         request.setStatus(BorrowRequest.RequestStatus.PENDING);
-        request.setRequestDate(java.time.LocalDateTime.now());
+        request.setRequestDate(LocalDateTime.now());
 
         return borrowRequestRepository.save(request);
     }
@@ -63,7 +83,6 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
         request.setStatus(BorrowRequest.RequestStatus.REJECTED);
         request.setAdminRemarks(remarks);
 
-        // Return the item to available pool
         Equipment eq = request.getEquipment();
         eq.setAvailableQuantity(eq.getAvailableQuantity() + 1);
         equipmentRepository.save(eq);
@@ -77,7 +96,6 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
                 .orElseThrow(() -> new RuntimeException("Request not found!"));
         request.setStatus(BorrowRequest.RequestStatus.RETURNED);
 
-        // Add back one item to available pool
         Equipment eq = request.getEquipment();
         eq.setAvailableQuantity(eq.getAvailableQuantity() + 1);
         equipmentRepository.save(eq);
