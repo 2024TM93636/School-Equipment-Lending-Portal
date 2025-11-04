@@ -1,0 +1,58 @@
+# =================================
+# Java / Spring Boot
+# =================================
+/target/
+*.log
+*.class
+*.jar
+*.war
+*.iml
+/.idea/
+/.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+
+# =================================
+# Node / React
+# =================================
+/node_modules/
+/build/
+/dist/
+/.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =================================
+# IDE / Editor files
+# =================================
+.vscode/
+*.sublime-workspace
+*.sublime-project
+*.swp
+.DS_Store
+/.project
+/.classpath
+/.settings/
+/*.launch
+/.metadata/
+
+# =================================
+# Misc / OS
+# =================================
+Thumbs.db
+*.bak
+*.tmp
+*.log
+
+# =================================
+# Maven specific
+# =================================
+/.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+/mavenHomeManager.xml
+
+# =================================
+# Custom folders
+# =================================
+/shelf/
+/workspace.xml

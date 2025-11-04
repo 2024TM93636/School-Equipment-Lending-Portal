@@ -1,6 +1,7 @@
 package com.school.equipmentlending.service.impl;
 
 import com.school.equipmentlending.model.Equipment;
+import com.school.equipmentlending.repository.BorrowRequestRepository;
 import com.school.equipmentlending.repository.EquipmentRepository;
 import com.school.equipmentlending.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 public class EquipmentServiceImpl implements EquipmentService {
 
     private final EquipmentRepository equipmentRepository;
+    private final BorrowRequestRepository borrowRequestRepository;
 
     @Override
     public Equipment addEquipment(Equipment equipment) {
@@ -43,6 +45,13 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public void deleteEquipment(Long id) {
+        Equipment equipment = equipmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Equipment not found!"));
+
+        if (!borrowRequestRepository.findByEquipment(equipment).isEmpty()) {
+            throw new RuntimeException("Cannot delete equipment with existing borrow requests!");
+        }
+
         equipmentRepository.deleteById(id);
     }
 }
