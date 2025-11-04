@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -18,19 +17,15 @@ public interface BorrowRequestRepository extends JpaRepository<BorrowRequest, Lo
 
     List<BorrowRequest> findByEquipment(Equipment equipment);
 
-    // ✅ Detect overlapping borrow requests for the same equipment
+    // ✅ Check if the same user already has an active (PENDING/APPROVED) request for this equipment
     @Query("""
         SELECT br FROM BorrowRequest br
         WHERE br.equipment.id = :equipmentId
+          AND br.user.id = :userId
           AND br.status IN ('APPROVED', 'PENDING')
-          AND (
-                (br.borrowStartDate <= :borrowEndDate)
-                AND (br.borrowEndDate >= :borrowStartDate)
-              )
     """)
-    List<BorrowRequest> findOverlappingRequests(
+    List<BorrowRequest> findActiveRequestsByUserAndEquipment(
             @Param("equipmentId") Long equipmentId,
-            @Param("borrowStartDate") LocalDate borrowStartDate,
-            @Param("borrowEndDate") LocalDate borrowEndDate
+            @Param("userId") Long userId
     );
 }

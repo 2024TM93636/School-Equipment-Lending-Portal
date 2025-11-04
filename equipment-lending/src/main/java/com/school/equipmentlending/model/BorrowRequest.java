@@ -30,10 +30,6 @@ public class BorrowRequest {
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
 
-    private LocalDate borrowStartDate;
-
-    private LocalDate borrowEndDate;
-
     private String adminRemarks;
 
     public enum RequestStatus {

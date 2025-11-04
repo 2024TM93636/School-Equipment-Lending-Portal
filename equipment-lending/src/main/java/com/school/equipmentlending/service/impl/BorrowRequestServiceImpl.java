@@ -31,24 +31,20 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
             throw new RuntimeException("Equipment not available!");
         }
 
-        //  Check for overlapping requests (same equipment + overlapping dates)
-        List<BorrowRequest> overlapping = borrowRequestRepository.findOverlappingRequests(
-                equipment.getId(),
-                request.getBorrowStartDate(),
-                request.getBorrowEndDate()
-        );
+        // ✅ Prevent same user from borrowing same equipment multiple times
+        List<BorrowRequest> existingRequests =
+                borrowRequestRepository.findActiveRequestsByUserAndEquipment(
+                        equipment.getId(), user.getId());
 
-        if (!overlapping.isEmpty()) {
+        if (!existingRequests.isEmpty()) {
             throw new ResourceAlreadyExistsException(
-                    "This equipment is already booked during the selected period!"
-            );
+                    "You already have an active request or borrowed this equipment!");
         }
 
-        // Reduce available count
+        // ✅ If allowed, reduce available count and create new request
         equipment.setAvailableQuantity(equipment.getAvailableQuantity() - 1);
         equipmentRepository.save(equipment);
 
-        // Save new request
         request.setEquipment(equipment);
         request.setUser(user);
         request.setStatus(BorrowRequest.RequestStatus.PENDING);
