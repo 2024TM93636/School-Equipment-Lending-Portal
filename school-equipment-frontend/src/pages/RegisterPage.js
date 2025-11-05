@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
-import "../custom-dashboard.css";
+import "../styles/custom-dashboard.css";
 
 const RegisterPage = () => {
   const [form, setForm] = useState({
@@ -15,24 +15,22 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
-
     try {
       await registerUser({
         ...form,
         email: form.email.trim().toLowerCase(),
         role: form.role.toUpperCase(),
       });
-      setSuccess("✅ Registration successful! Redirecting...");
-      setTimeout(() => navigate("/"), 1500);
+      setSuccess("Registration successful! Redirecting...");
+      setTimeout(() => navigate("/"), 1400);
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed. Try again.");
     } finally {
@@ -42,11 +40,12 @@ const RegisterPage = () => {
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100">
-      <div className="card p-5 shadow-lg border-0" style={{ width: "420px" }}>
+      <div className="card p-5 shadow-lg border-0" style={{ width: 420 }}>
         <h2 className="text-center text-gradient mb-3">Create Account ✨</h2>
         <p className="text-center text-muted mb-4">
           Join the School Equipment Lending System
         </p>
+
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 

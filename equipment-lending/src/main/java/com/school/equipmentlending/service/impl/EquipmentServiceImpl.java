@@ -5,6 +5,7 @@ import com.school.equipmentlending.repository.BorrowRequestRepository;
 import com.school.equipmentlending.repository.EquipmentRepository;
 import com.school.equipmentlending.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,12 +24,12 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public List<Equipment> getAllEquipment() {
-        return equipmentRepository.findAll();
+        return equipmentRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     @Override
     public List<Equipment> getAvailableEquipment() {
-        return equipmentRepository.findByAvailableQuantityGreaterThan(0);
+        return equipmentRepository.findByAvailableQuantityGreaterThanOrderByIdDesc(0);
     }
 
     @Override

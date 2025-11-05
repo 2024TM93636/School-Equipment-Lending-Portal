@@ -2,12 +2,12 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
-// ✅ Create a single reusable Axios instance
+// Create a reusable Axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// ✅ Register interceptors only once, even if React Strict Mode reloads
+// Register interceptors only once (helps during StrictMode double-mount)
 if (!api.interceptorsRegistered) {
   // --------------------- REQUEST INTERCEPTOR ---------------------
   api.interceptors.request.use(
@@ -25,24 +25,19 @@ if (!api.interceptorsRegistered) {
   api.interceptors.response.use(
     (response) => response,
     (error) => {
-      // Handle Unauthorized responses globally
       if (error.response && error.response.status === 401) {
-        console.warn("Session expired. Redirecting to login...");
+        // clear session and redirect to login
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("user");
         window.location.href = "/";
       }
-
-      // Optionally handle network/server errors gracefully
       if (!error.response) {
-        console.error("Network error or server not reachable");
+        console.error("Network error or server is unreachable");
       }
-
       return Promise.reject(error);
     }
   );
 
-  // Mark interceptors as registered
   api.interceptorsRegistered = true;
 }
 

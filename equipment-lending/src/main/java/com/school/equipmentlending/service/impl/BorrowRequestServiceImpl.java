@@ -31,7 +31,7 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
             throw new RuntimeException("Equipment not available!");
         }
 
-        // ✅ Prevent same user from borrowing same equipment multiple times
+        // Prevent same user from borrowing same equipment multiple times
         List<BorrowRequest> existingRequests =
                 borrowRequestRepository.findActiveRequestsByUserAndEquipment(
                         equipment.getId(), user.getId());
@@ -41,7 +41,7 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
                     "You already have an active request or borrowed this equipment!");
         }
 
-        // ✅ If allowed, reduce available count and create new request
+        // If allowed, reduce available count and create new request
         equipment.setAvailableQuantity(equipment.getAvailableQuantity() - 1);
         equipmentRepository.save(equipment);
 
@@ -55,12 +55,12 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
 
     @Override
     public List<BorrowRequest> getRequestsByUser(User user) {
-        return borrowRequestRepository.findByUser(user);
+        return borrowRequestRepository.findByUserOrderByRequestDateDesc(user);
     }
 
     @Override
     public List<BorrowRequest> getAllRequests() {
-        return borrowRequestRepository.findAll();
+        return borrowRequestRepository.findAllByOrderByRequestDateDesc();
     }
 
     @Override
@@ -93,7 +93,11 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
         request.setStatus(BorrowRequest.RequestStatus.RETURNED);
 
         Equipment eq = request.getEquipment();
-        eq.setAvailableQuantity(eq.getAvailableQuantity() + 1);
+        int updatedAvailable = eq.getAvailableQuantity() + 1;
+        if (updatedAvailable > eq.getQuantity()) {
+            updatedAvailable = eq.getQuantity();
+        }
+        eq.setAvailableQuantity(updatedAvailable);
         equipmentRepository.save(eq);
 
         return borrowRequestRepository.save(request);

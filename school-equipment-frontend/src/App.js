@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,20 +14,31 @@ import RequestsPage from "./pages/RequestsPage";
 import Navbar from "./components/Navbar";
 import { getUserById } from "./services/api";
 import PrivateRoute from "./components/PrivateRoute";
-import ThemeToggle from "./components/ThemeToggle";
-import "./custom-dashboard.css";
+import "./styles/custom-dashboard.css";
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     const savedUser = sessionStorage.getItem("user");
-    if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    setInitializing(false);
   }, []);
+
+  if (initializing) {
+    // Prevent premature redirect
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status"></div>
+      </div>
+    );
+  }
 
   return (
     <Router>
-      <ThemeToggle />
       <MainLayout user={user} setUser={setUser} />
     </Router>
   );
@@ -40,10 +51,15 @@ const MainLayout = ({ user, setUser }) => {
   const [userRole, setUserRole] = useState(user?.role || "");
 
   useEffect(() => {
+    let mounted = true;
     const fetchUser = async () => {
-      if (!user || !user.id) return;
+      if (!user || !user.id) {
+        setUserRole("");
+        return;
+      }
       try {
         const response = await getUserById(user.id);
+        if (!mounted) return;
         setUserRole(response.data.role);
       } catch {
         sessionStorage.clear();
@@ -52,7 +68,8 @@ const MainLayout = ({ user, setUser }) => {
       }
     };
     fetchUser();
-  }, [user, navigate]);
+    return () => (mounted = false);
+  }, [user, navigate, setUser]);
 
   return (
     <>
@@ -91,9 +108,6 @@ const MainLayout = ({ user, setUser }) => {
           }
         />
       </Routes>
-      {/* <footer className="text-center mt-5 mb-3 text-muted small">
-        © 2025 School Equipment Lending System | Built with ❤️ using React + Spring Boot
-      </footer> */}
     </>
   );
 };

@@ -13,11 +13,13 @@ import java.util.List;
 @Repository
 public interface BorrowRequestRepository extends JpaRepository<BorrowRequest, Long> {
 
-    List<BorrowRequest> findByUser(User user);
+    List<BorrowRequest> findByUserOrderByRequestDateDesc(User user);
 
     List<BorrowRequest> findByEquipment(Equipment equipment);
 
-    // ✅ Check if the same user already has an active (PENDING/APPROVED) request for this equipment
+    List<BorrowRequest> findAllByOrderByRequestDateDesc();
+
+    // Check if the same user already has an active (PENDING/APPROVED) request for this equipment
     @Query("""
         SELECT br FROM BorrowRequest br
         WHERE br.equipment.id = :equipmentId

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/api";
-import "../custom-dashboard.css";
+import "../styles/custom-dashboard.css";
 
 const LoginPage = ({ setUser }) => {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
@@ -29,7 +29,7 @@ const LoginPage = ({ setUser }) => {
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100">
-      <div className="card p-5 shadow-lg border-0" style={{ width: "420px" }}>
+      <div className="card p-5 shadow-lg border-0" style={{ width: 420 }}>
         <h2 className="text-center text-gradient mb-3">Welcome Back 👋</h2>
         <p className="text-center text-muted mb-4">
           Login to access your dashboard

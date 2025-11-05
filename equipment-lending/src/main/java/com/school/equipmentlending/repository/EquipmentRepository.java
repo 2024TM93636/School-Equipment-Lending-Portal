@@ -8,5 +8,5 @@ import java.util.List;
 @Repository
 public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
 
-    List<Equipment> findByAvailableQuantityGreaterThan(int minAvailable);
+    List<Equipment> findByAvailableQuantityGreaterThanOrderByIdDesc(int minAvailable);
 }

@@ -1,80 +1,100 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { logoutUser } from "../services/api";
-import "../custom-dashboard.css";
+import "../styles/custom-dashboard.css";
 
 const Navbar = ({ userRole, userName, setUser }) => {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(
-    localStorage.getItem("theme") === "dark"
+    sessionStorage.getItem("theme") === "dark"
   );
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // 🌙 Toggle Dark / Light mode
+  // Apply saved theme
+  useEffect(() => {
+    const savedTheme = sessionStorage.getItem("theme") || "light";
+    document.body.classList.toggle("dark-mode", savedTheme === "dark");
+    setIsDark(savedTheme === "dark");
+  }, []);
+
+  // Toggle theme and persist
   const toggleTheme = () => {
     const newTheme = isDark ? "light" : "dark";
     setIsDark(!isDark);
-    document.body.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
+    document.body.classList.toggle("dark-mode", newTheme === "dark");
+    sessionStorage.setItem("theme", newTheme);
   };
-
-  // Restore theme on load
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", savedTheme);
-    setIsDark(savedTheme === "dark");
-  }, []);
 
   const handleLogout = async () => {
     try {
       await logoutUser();
     } catch {
-      console.warn("Logout failed on server (ignored).");
+      console.warn("Server logout failed; clearing local session.");
+    } finally {
+      setUser(null);
+      sessionStorage.clear();
+      navigate("/");
     }
-    setUser(null);
-    sessionStorage.clear();
-    navigate("/");
   };
 
   return (
-    <nav className="navbar navbar-expand-lg shadow-sm sticky-top">
-      <div className="container-fluid">
+    <nav
+      className={`navbar navbar-expand-lg ${
+        isDark ? "navbar-dark bg-dark" : "navbar-light bg-white"
+      } shadow-sm sticky-top border-bottom`}
+    >
+      <div className="container-fluid px-4">
         {/* Brand */}
-        <Link className="navbar-brand fw-bold text-gradient" to="/dashboard">
-          🎓 School Lending
+        <Link
+          className="navbar-brand fw-bold text-gradient d-flex align-items-center gap-2"
+          to="/dashboard"
+          style={{ fontSize: "1.25rem" }}
+        >
+          🎓 <span>School Equipment Portal</span>
         </Link>
 
-        {/* Hamburger for mobile */}
+        {/* Mobile toggle */}
         <button
-          className="navbar-toggler"
+          className="navbar-toggler border-0"
           type="button"
+          aria-label="Toggle navigation"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Nav links */}
+        {/* Menu items */}
         <div
-          className={`collapse navbar-collapse ${menuOpen ? "show" : ""}`}
-          id="navbarNav"
+          className={`collapse navbar-collapse justify-content-between ${
+            menuOpen ? "show" : ""
+          }`}
         >
-          <ul className="navbar-nav me-auto">
+          <ul className="navbar-nav">
             <li className="nav-item">
-              <Link className="nav-link" to="/dashboard">
-                Dashboard
+              <Link
+                className="nav-link fw-semibold d-flex align-items-center gap-1"
+                to="/dashboard"
+              >
+                🏠 <span>Dashboard</span>
               </Link>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/requests">
-                Requests
+              <Link
+                className="nav-link fw-semibold d-flex align-items-center gap-1"
+                to="/requests"
+              >
+                📋 <span>Requests</span>
               </Link>
             </li>
 
             {userRole?.toUpperCase() === "ADMIN" && (
               <li className="nav-item">
-                <Link className="nav-link" to="/admin">
-                  Admin Panel
+                <Link
+                  className="nav-link fw-semibold d-flex align-items-center gap-1"
+                  to="/admin"
+                >
+                  ⚙️ <span>Admin Panel</span>
                 </Link>
               </li>
             )}
@@ -84,25 +104,27 @@ const Navbar = ({ userRole, userName, setUser }) => {
           <div className="d-flex align-items-center gap-3">
             {/* Theme toggle */}
             <button
-              className="btn btn-outline-primary btn-sm rounded-pill"
+              className="btn btn-outline-primary btn-sm rounded-pill px-3"
               onClick={toggleTheme}
-              title="Toggle dark mode"
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              {isDark ? "☀️" : "🌙"}
+              {isDark ? "☀️ Light" : "🌙 Dark"}
             </button>
 
             {/* User info */}
-            <span className="text-muted small fw-semibold">
-              Hi, {userName}{" "}
-              <span className="text-primary">({userRole})</span>
+            <span className="small fw-semibold">
+              Hi, <span className="text-primary">{userName}</span>{" "}
+              <span className="text-muted">
+                ({userRole ? userRole.toUpperCase() : "GUEST"})
+              </span>
             </span>
 
             {/* Logout */}
             <button
-              className="btn btn-outline-danger btn-sm rounded-pill"
+              className="btn btn-outline-danger btn-sm rounded-pill px-3"
               onClick={handleLogout}
             >
-              Logout
+              🚪 Logout
             </button>
           </div>
         </div>

@@ -1,4 +1,3 @@
-import React from "react";
 import { Navigate } from "react-router-dom";
 
 /**
@@ -8,17 +7,13 @@ import { Navigate } from "react-router-dom";
  */
 const PrivateRoute = ({ user, requiredRole, children }) => {
   if (!user) {
-    console.warn("Unauthorized access attempt → Redirecting to login");
     return <Navigate to="/" replace />;
   }
 
   if (
     requiredRole &&
-    user.role.toUpperCase() !== requiredRole.toUpperCase()
+    (!user.role || user.role.toUpperCase() !== requiredRole.toUpperCase())
   ) {
-    console.warn(
-      `Role mismatch: user=${user.role}, required=${requiredRole} → Redirecting`
-    );
     return <Navigate to="/dashboard" replace />;
   }
 
