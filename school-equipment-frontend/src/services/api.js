@@ -2,43 +2,61 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
-// Create a reusable Axios instance
+// ✅ Create a single reusable Axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Add token automatically from sessionStorage (common for all requests)
-api.interceptors.request.use(
-  (config) => {
-    const token = sessionStorage.getItem("token");
-    if (token) {
-      config.headers["Authorization"] = token;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// ✅ Register interceptors only once, even if React Strict Mode reloads
+if (!api.interceptorsRegistered) {
+  // --------------------- REQUEST INTERCEPTOR ---------------------
+  api.interceptors.request.use(
+    (config) => {
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        config.headers["Authorization"] = token;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
-// Handle global 401 errors (token expired, etc.)
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      console.warn("Session expired. Please login again.");
-      sessionStorage.removeItem("token");
-      window.location.href = "/";
-    }
-    return Promise.reject(error);
-  }
-);
+  // --------------------- RESPONSE INTERCEPTOR ---------------------
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      // Handle Unauthorized responses globally
+      if (error.response && error.response.status === 401) {
+        console.warn("Session expired. Redirecting to login...");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        window.location.href = "/";
+      }
 
-// ----------------- User APIs -----------------
+      // Optionally handle network/server errors gracefully
+      if (!error.response) {
+        console.error("Network error or server not reachable");
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
+  // Mark interceptors as registered
+  api.interceptorsRegistered = true;
+}
+
+// ==========================================================
+//                     USER APIs
+// ==========================================================
 export const registerUser = (user) => api.post("/users/register", user);
 export const loginUser = (credentials) => api.post("/users/login", credentials);
 export const getUserById = (userId) => api.get(`/users/${userId}`);
 export const logoutUser = () => api.post("/users/logout", {});
 
-// ----------------- Equipment APIs -----------------
+// ==========================================================
+//                     EQUIPMENT APIs
+// ==========================================================
 export const getAllEquipment = () => api.get("/equipment");
 export const getAvailableEquipment = () => api.get("/equipment/available");
 export const addEquipment = (equipment) => api.post("/equipment", equipment);
@@ -46,7 +64,9 @@ export const updateEquipment = (id, equipment) =>
   api.put(`/equipment/${id}`, equipment);
 export const deleteEquipment = (id) => api.delete(`/equipment/${id}`);
 
-// ----------------- Borrow Request APIs -----------------
+// ==========================================================
+//                     BORROW REQUEST APIs
+// ==========================================================
 export const createBorrowRequest = (request) => api.post("/requests", request);
 export const getAllRequests = () => api.get("/requests");
 export const getUserRequests = (userId) => api.get(`/requests/user/${userId}`);

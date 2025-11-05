@@ -16,8 +16,8 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // fetch requests
-  const fetchRequests = async () => {
+  // ✅ Safe fetch method (does NOT return a promise to useEffect)
+  const fetchRequests = async (isMounted) => {
     setLoading(true);
     try {
       let response;
@@ -26,12 +26,16 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
       } else {
         response = await getUserRequests(userId);
       }
-      setRequests(response.data);
+
+      // ✅ Only update state if still mounted
+      if (isMounted) {
+        setRequests(response.data);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching requests:", err);
       showMessage("Failed to load requests.");
     } finally {
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
   };
 
@@ -40,12 +44,12 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  // approve / reject / return handlers
+  // ✅ Approve / Reject / Return handlers
   const handleApprove = async (id) => {
     try {
       await approveRequest(id, { remarks: "Approved by admin" });
       showMessage("Request approved successfully");
-      fetchRequests();
+      fetchRequests(true);
     } catch (err) {
       showMessage(err.response?.data?.error || "Failed to approve");
     }
@@ -55,7 +59,7 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
     try {
       await rejectRequest(id, { remarks: "Rejected by admin" });
       showMessage("Request rejected");
-      fetchRequests();
+      fetchRequests(true);
     } catch (err) {
       showMessage(err.response?.data?.error || "Failed to reject");
     }
@@ -65,17 +69,22 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
     try {
       await markReturned(id);
       showMessage("Equipment marked as returned");
-      fetchRequests();
+      fetchRequests(true);
     } catch (err) {
       showMessage(err.response?.data?.error || "Failed to mark returned");
     }
   };
 
+  // ✅ useEffect with valid cleanup function
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    let isMounted = true;
+    fetchRequests(isMounted);
+    return () => {
+      isMounted = false;
+    };
+  }, [userRole, userId]);
 
-  // Filtered requests based on search and status
+  // Filter requests
   const filteredRequests = requests.filter(
     (req) =>
       (req.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -106,7 +115,7 @@ const RequestsPage = ({ userRole = "ADMIN", userId = 1 }) => {
 
       {message && <div className="alert alert-info text-center">{message}</div>}
 
-      {/* Search & Status Filter */}
+      {/* Search & Filter */}
       <div className="row mb-3 g-2">
         <div className="col-md-6">
           <div className="input-group">

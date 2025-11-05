@@ -1,16 +1,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
+import "../custom-dashboard.css";
 
 const RegisterPage = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("STUDENT");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "STUDENT",
+  });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -20,94 +27,96 @@ const RegisterPage = () => {
 
     try {
       await registerUser({
-        name,
-        email: email.trim().toLowerCase(),
-        password,
-        role: role.toUpperCase(),
+        ...form,
+        email: form.email.trim().toLowerCase(),
+        role: form.role.toUpperCase(),
       });
-      setLoading(false);
-      setSuccess("Registration successful! Redirecting to login...");
-      setTimeout(() => navigate("/"), 2000);
+      setSuccess("✅ Registration successful! Redirecting...");
+      setTimeout(() => navigate("/"), 1500);
     } catch (err) {
-      setLoading(false);
       setError(err.response?.data?.error || "Registration failed. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6">
-          <div className="card p-4 shadow">
-            <h2 className="card-title mb-4 text-center">Register</h2>
-            {error && <div className="alert alert-danger">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
-            <form onSubmit={handleRegister}>
-              <div className="mb-3">
-                <label className="form-label">Name:</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
+    <div className="d-flex align-items-center justify-content-center vh-100">
+      <div className="card p-5 shadow-lg border-0" style={{ width: "420px" }}>
+        <h2 className="text-center text-gradient mb-3">Create Account ✨</h2>
+        <p className="text-center text-muted mb-4">
+          Join the School Equipment Lending System
+        </p>
+        {error && <div className="alert alert-danger">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
 
-              <div className="mb-3">
-                <label className="form-label">Email:</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Password:</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Role:</label>
-                <select
-                  className="form-select"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  <option value="STUDENT">Student</option>
-                  <option value="STAFF">Staff</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-success w-100"
-                disabled={loading}
-              >
-                {loading && (
-                  <span className="spinner-border spinner-border-sm me-2"></span>
-                )}
-                Register
-              </button>
-            </form>
-
-            <div className="mt-3 text-center">
-              <small>
-                Already have an account? <a href="/">Login here</a>
-              </small>
-            </div>
+        <form onSubmit={handleRegister}>
+          <div className="mb-3">
+            <label className="form-label">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              className="form-control rounded-pill"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
           </div>
+
+          <div className="mb-3">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              name="email"
+              className="form-control rounded-pill"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              name="password"
+              className="form-control rounded-pill"
+              value={form.password}
+              onChange={handleChange}
+              required
+              minLength={6}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Role</label>
+            <select
+              name="role"
+              className="form-select rounded-pill"
+              value={form.role}
+              onChange={handleChange}
+            >
+              <option value="STUDENT">Student</option>
+              <option value="STAFF">Staff</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+
+          <button
+            className="btn btn-success w-100 rounded-pill py-2"
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+
+        <div className="text-center mt-3">
+          <small>
+            Already registered?{" "}
+            <a href="/" className="text-primary">
+              Login here
+            </a>
+          </small>
         </div>
       </div>
     </div>

@@ -12,13 +12,14 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RequestsPage from "./pages/RequestsPage";
 import Navbar from "./components/Navbar";
-import { getUserById, logoutUser } from "./services/api";
+import { getUserById } from "./services/api";
 import PrivateRoute from "./components/PrivateRoute";
+import ThemeToggle from "./components/ThemeToggle";
+import "./custom-dashboard.css";
 
 const App = () => {
   const [user, setUser] = useState(null);
 
-  // Load user from sessionStorage
   useEffect(() => {
     const savedUser = sessionStorage.getItem("user");
     if (savedUser) setUser(JSON.parse(savedUser));
@@ -26,6 +27,7 @@ const App = () => {
 
   return (
     <Router>
+      <ThemeToggle />
       <MainLayout user={user} setUser={setUser} />
     </Router>
   );
@@ -35,21 +37,16 @@ const MainLayout = ({ user, setUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const hideNavbar = ["/", "/register"].includes(location.pathname);
-
   const [userRole, setUserRole] = useState(user?.role || "");
 
-  // Fetch updated user info from backend
   useEffect(() => {
     const fetchUser = async () => {
       if (!user || !user.id) return;
       try {
         const response = await getUserById(user.id);
         setUserRole(response.data.role);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-        // If user not found, clear storage and redirect to login
-        sessionStorage.removeItem("user");
-        sessionStorage.removeItem("token");
+      } catch {
+        sessionStorage.clear();
         setUser(null);
         navigate("/");
       }
@@ -94,6 +91,9 @@ const MainLayout = ({ user, setUser }) => {
           }
         />
       </Routes>
+      {/* <footer className="text-center mt-5 mb-3 text-muted small">
+        © 2025 School Equipment Lending System | Built with ❤️ using React + Spring Boot
+      </footer> */}
     </>
   );
 };

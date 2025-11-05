@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { getAvailableEquipment, createBorrowRequest } from "../services/api";
-import { FaClipboardList, FaTools } from "react-icons/fa";
-import "./Dashboard.css";
+import { FaTools, FaClipboardList } from "react-icons/fa";
+import "../custom-dashboard.css";
+
+
 
 const Dashboard = ({ user, userRole }) => {
   const [equipmentList, setEquipmentList] = useState([]);
@@ -16,94 +18,79 @@ const Dashboard = ({ user, userRole }) => {
       const response = await getAvailableEquipment();
       setEquipmentList(response.data);
       setFilteredList(response.data);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setMessage("⚠️ Failed to load equipment");
     }
   };
 
-  const handleBorrow = async (equipmentId) => {
+  const handleBorrow = async (id) => {
     try {
       const response = await createBorrowRequest({
         user: { id: user.id },
-        equipment: { id: equipmentId },
+        equipment: { id },
       });
-      setMessage(`Request submitted for "${response.data.equipment.name}"`);
+      setMessage(` Request sent for "${response.data.equipment.name}"`);
       fetchEquipment();
-      setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      setMessage(err.response?.data?.error || "Failed to borrow");
+      setMessage(err.response?.data?.error || " Borrow failed");
+    } finally {
       setTimeout(() => setMessage(""), 3000);
     }
   };
 
   useEffect(() => {
-    let updatedList = [...equipmentList];
-
-    if (searchTerm) {
-      updatedList = updatedList.filter((eq) =>
-        eq.name.toLowerCase().includes(searchTerm.toLowerCase())
+    let list = [...equipmentList];
+    if (searchTerm)
+      list = list.filter((e) =>
+        e.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-
-    if (categoryFilter) {
-      updatedList = updatedList.filter((eq) => eq.category === categoryFilter);
-    }
-
-    if (availabilityFilter) {
-      updatedList = updatedList.filter((eq) =>
+    if (categoryFilter)
+      list = list.filter((e) => e.category === categoryFilter);
+    if (availabilityFilter)
+      list = list.filter((e) =>
         availabilityFilter === "available"
-          ? eq.availableQuantity > 0
-          : eq.availableQuantity === 0
+          ? e.availableQuantity > 0
+          : e.availableQuantity === 0
       );
-    }
-
-    setFilteredList(updatedList);
+    setFilteredList(list);
   }, [searchTerm, categoryFilter, availabilityFilter, equipmentList]);
 
-  const categories = [...new Set(equipmentList.map((eq) => eq.category))];
+  useEffect(() => fetchEquipment(), []);
 
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
+  const categories = [...new Set(equipmentList.map((e) => e.category))];
 
   return (
-    <div className="container mt-4">
+    <div className="container py-5">
+      <h2 className="text-center text-gradient mb-3">🎒 Equipment Catalog</h2>
       <p className="text-center text-muted mb-4">
-        Browse and request equipment easily.
+        Browse and request items for your projects
       </p>
-
       {message && <div className="alert alert-info text-center">{message}</div>}
 
-      {/* Search & Filter */}
-      <div className="row mb-4 g-2">
+      <div className="row g-3 mb-4">
         <div className="col-md-4">
           <input
-            type="text"
-            className="form-control"
-            placeholder="Search by equipment name..."
+            className="form-control rounded-pill"
+            placeholder="🔍 Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
         <div className="col-md-4">
           <select
-            className="form-select"
+            className="form-select rounded-pill"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
             <option value="">All Categories</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
+              <option key={cat}>{cat}</option>
             ))}
           </select>
         </div>
-
         <div className="col-md-4">
           <select
-            className="form-select"
+            className="form-select rounded-pill"
             value={availabilityFilter}
             onChange={(e) => setAvailabilityFilter(e.target.value)}
           >
@@ -115,56 +102,49 @@ const Dashboard = ({ user, userRole }) => {
       </div>
 
       <div className="row">
-        {filteredList.length === 0 && (
-          <div className="col-12 text-center">
-            <p className="text-muted">No equipment matches your filters.</p>
-          </div>
-        )}
-
-        {filteredList.map((eq) => (
-          <div key={eq.id} className="col-md-4 mb-4">
-            <div className="card h-100 shadow-sm border-0 hover-shadow">
-              <div className="card-body d-flex flex-column justify-content-between">
-                <div>
-                  <h5 className="card-title text-primary">{eq.name}</h5>
-                  <div className="mb-2">
-                    <span className="badge bg-secondary me-1">
-                      <FaTools className="me-1" />
-                      {eq.category}
-                    </span>
-                    <span
-                      className={`badge ${
-                        eq.availableQuantity > 0 ? "bg-success" : "bg-danger"
-                      }`}
-                    >
-                      {eq.availableQuantity > 0 ? "Available" : "Not Available"}
-                    </span>
-                  </div>
-                  <p className="card-text text-muted small mb-0">
-                    <FaClipboardList className="me-1" />
-                    Condition: {eq.conditionStatus}
+        {filteredList.length === 0 ? (
+          <p className="text-center text-muted">No items match filters.</p>
+        ) : (
+          filteredList.map((eq) => (
+            <div key={eq.id} className="col-md-4 mb-4">
+              <div className="card h-100 border-0 shadow-sm text-center">
+                <div className="card-body">
+                  <h5 className="fw-bold text-primary">{eq.name}</h5>
+                  <p className="text-muted small mb-2">
+                    <FaTools className="me-1" /> {eq.category}
                   </p>
-                </div>
-
-                {userRole !== "ADMIN" && (
-                  <button
-                    className={`btn mt-3 ${
-                      eq.availableQuantity === 0
-                        ? "btn-secondary"
-                        : "btn-primary"
+                  <p className="text-muted small">
+                    <FaClipboardList className="me-1" /> {eq.conditionStatus}
+                  </p>
+                  <span
+                    className={`badge ${
+                      eq.availableQuantity > 0 ? "bg-success" : "bg-danger"
                     }`}
-                    disabled={eq.availableQuantity === 0}
-                    onClick={() => handleBorrow(eq.id)}
                   >
-                    {eq.availableQuantity === 0
-                      ? "Unavailable"
-                      : "Request Borrow"}
-                  </button>
-                )}
+                    {eq.availableQuantity > 0
+                      ? `${eq.availableQuantity} Available`
+                      : "Not Available"}
+                  </span>
+                  {userRole !== "ADMIN" && (
+                    <button
+                      className={`btn mt-3 w-75 ${
+                        eq.availableQuantity > 0
+                          ? "btn-primary"
+                          : "btn-secondary"
+                      } rounded-pill`}
+                      onClick={() => handleBorrow(eq.id)}
+                      disabled={eq.availableQuantity === 0}
+                    >
+                      {eq.availableQuantity > 0
+                        ? "📦 Request"
+                        : "Unavailable"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
